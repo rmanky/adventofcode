@@ -1,14 +1,18 @@
-
 use std::{collections::HashMap, error::Error, fs};
 
 pub fn one() -> Result<(), Box<dyn Error>> {
-    one_one()?;
-    one_two()?;
+    println!("Day One");
+
+    let pt1 = one_one()?;
+    println!("Part 1: {}", pt1);
+
+    let pt2 = one_two()?;
+    println!("Part 2: {}", pt2);
 
     Ok(())
 }
 
-fn one_one() -> Result<(), Box<dyn Error>> {
+fn one_one() -> Result<String, Box<dyn Error>> {
     // Read the input to a string
     let file = fs::read_to_string("inputs/one.txt")?;
 
@@ -32,12 +36,10 @@ fn one_one() -> Result<(), Box<dyn Error>> {
         sum += (left[i] - right[i]).abs();
     }
 
-    println!("{:#?}", sum);
-
-    Ok(())
+    Ok(sum.to_string())
 }
 
-fn one_two() -> Result<(), Box<dyn Error>> {
+fn one_two() -> Result<String, Box<dyn Error>> {
     // Read the input to a string
     let file = fs::read_to_string("inputs/one.txt")?;
 
@@ -73,7 +75,5 @@ fn one_two() -> Result<(), Box<dyn Error>> {
         sum += ele * popularity;
     }
 
-    println!("{:#?}", sum);
-
-    Ok(())
+    Ok(sum.to_string())
 }
