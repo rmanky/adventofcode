@@ -78,13 +78,8 @@ fn is_safe(nums: &Vec<i32>) -> bool {
 
 fn is_subset_safe(nums: &Vec<i32>) -> bool {
     for i in 0..nums.len() {
-        // try removing one until we get one that is safe
-        let new_nums: Vec<i32> = nums
-            .into_iter()
-            .enumerate()
-            .filter(|(idx, _)| *idx != i)
-            .map(|(_, n)| *n)
-            .collect();
+        let mut new_nums = nums.clone();
+        new_nums.remove(i);
 
         if is_safe(&new_nums) {
             return true;
