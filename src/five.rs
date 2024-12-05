@@ -4,8 +4,8 @@ use std::{ cmp::Ordering, collections::HashMap, error::Error, fs };
 pub fn five() -> Result<(), Box<dyn Error>> {
     println!("Day Five");
 
-    // let pt1 = five_one()?;
-    // println!("Part 1: {}", pt1);
+    let pt1 = five_one()?;
+    println!("Part 1: {}", pt1);
 
     let pt2 = five_two()?;
     println!("Part 2: {}", pt2);
