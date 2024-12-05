@@ -1,4 +1,3 @@
-use core::num;
 use std::{ cmp::Ordering, collections::HashMap, error::Error, fs };
 
 pub fn five() -> Result<(), Box<dyn Error>> {
