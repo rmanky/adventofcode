@@ -3,29 +3,30 @@ use std::{ collections::HashSet, error::Error, fs };
 pub fn six() -> Result<(), Box<dyn Error>> {
     println!("Day Six");
 
-    let pt1 = six_one()?;
+    let input = fs::read_to_string("inputs/six.txt")?;
+    let (mut map, guard_pos) = parse_input(&input)?;
+
+    let pt1 = run_maze(&map, guard_pos)?.len();
     println!("Part 1: {}", pt1);
 
-    let pt2 = six_two()?;
+    let pt2 = count_fillable_squares(map.as_mut(), guard_pos)?;
     println!("Part 2: {}", pt2);
 
     Ok(())
 }
 
-#[derive(Debug)]
-#[derive(Copy, Clone)]
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 struct Pos {
     y: i32,
     x: i32,
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Square {
     Free,
     Box,
 }
+
 // 0 = up, 1 = right, 2 = down, 3 = left
 const DIRS: [Pos; 4] = [
     Pos { y: -1, x: 0 },
@@ -34,40 +35,22 @@ const DIRS: [Pos; 4] = [
     Pos { y: 0, x: -1 },
 ];
 
-fn six_one() -> Result<String, Box<dyn Error>> {
-    let file = fs::read_to_string("inputs/six.txt")?;
-
-    let sum = run_maze(&file)?.len();
-
-    Ok(sum.to_string())
-}
-
-fn six_two() -> Result<String, Box<dyn Error>> {
-    let file = fs::read_to_string("inputs/six.txt")?;
-
-    let candidates = run_maze(&file)?;
-
-    let mut guard_pos = Pos {
-        y: 0,
-        x: 0,
-    };
-
-    let chars = vec!['.', '#', '^'];
-
-    let mut map: Vec<Vec<Square>> = file
+fn parse_input(input: &str) -> Result<(Vec<Vec<Square>>, Pos), Box<dyn Error>> {
+    let mut guard_pos = Pos { x: 0, y: 0 };
+    let map = input
         .lines()
         .enumerate()
-        .map(|(y, l)|
-            l
-                .chars()
-                .filter(|c| chars.contains(c))
+        .map(|(y, line)| {
+            line.chars()
                 .enumerate()
-                .filter_map(|(x, e)| {
-                    match e {
+                .filter_map(|(x, c)| {
+                    match c {
                         '#' => Some(Square::Box),
                         '^' => {
-                            guard_pos.y = y.try_into().ok()?;
-                            guard_pos.x = x.try_into().ok()?;
+                            guard_pos = Pos {
+                                y: y as i32,
+                                x: x as i32,
+                            };
                             Some(Square::Free)
                         }
                         '.' => Some(Square::Free),
@@ -75,66 +58,16 @@ fn six_two() -> Result<String, Box<dyn Error>> {
                     }
                 })
                 .collect()
-        )
+        })
         .collect();
-
-    let mut sum = 0;
-
-    for ele in candidates {
-        let y: usize = ele.y.try_into()?;
-        let x: usize = ele.x.try_into()?;
-        if map[y][x] == Square::Free {
-            map[y][x] = Square::Box;
-            let (loops, _) = is_loop(&map, guard_pos)?;
-            if loops {
-                sum += 1;
-            }
-            map[y][x] = Square::Free;
-        }
-    }
-
-    Ok(sum.to_string())
+    Ok((map, guard_pos))
 }
 
-fn run_maze(file: &str) -> Result<HashSet<Pos>, Box<dyn Error>> {
-    let mut guard_pos = Pos {
-        y: 0,
-        x: 0,
-    };
-
-    // 0 = up, 1 = right, 2 = down, 3 = left
+fn run_maze(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<HashSet<Pos>, Box<dyn Error>> {
     let mut direction = 0;
-
-    let chars = vec!['.', '#', '^'];
-
-    let map: Vec<Vec<Square>> = file
-        .lines()
-        .enumerate()
-        .map(|(y, l)|
-            l
-                .chars()
-                .filter(|c| chars.contains(c))
-                .enumerate()
-                .filter_map(|(x, e)| {
-                    match e {
-                        '#' => Some(Square::Box),
-                        '^' => {
-                            guard_pos.y = y.try_into().ok()?;
-                            guard_pos.x = x.try_into().ok()?;
-                            Some(Square::Free)
-                        }
-                        '.' => Some(Square::Free),
-                        _ => None,
-                    }
-                })
-                .collect()
-        )
-        .collect();
-
-    let height = map.len().try_into()?;
-    let width = map[0].len().try_into()?;
-
-    let mut visited: HashSet<Pos> = HashSet::new();
+    let height = map.len() as i32;
+    let width = map[0].len() as i32;
+    let mut visited = HashSet::new();
     visited.insert(guard_pos);
 
     loop {
@@ -146,15 +79,12 @@ fn run_maze(file: &str) -> Result<HashSet<Pos>, Box<dyn Error>> {
             break;
         }
 
-        let gy: usize = igy.try_into()?;
-        let gx: usize = igx.try_into()?;
+        let gy = igy as usize;
+        let gx = igx as usize;
 
-        let next_space = &map[gy][gx];
-
-        match next_space {
+        match map[gy][gx] {
             Square::Free => {
-                guard_pos.x = gx.try_into()?;
-                guard_pos.y = gy.try_into()?;
+                guard_pos = Pos { x: gx as i32, y: gy as i32 };
                 visited.insert(guard_pos);
             }
             Square::Box => {
@@ -166,18 +96,37 @@ fn run_maze(file: &str) -> Result<HashSet<Pos>, Box<dyn Error>> {
     Ok(visited)
 }
 
-fn is_loop(map: &Vec<Vec<Square>>, guard: Pos) -> Result<(bool, usize), Box<dyn Error>> {
-    let mut guard_pos = guard.clone();
+fn count_fillable_squares(
+    map: &mut Vec<Vec<Square>>,
+    guard_pos: Pos
+) -> Result<usize, Box<dyn Error>> {
+    let candidates = run_maze(map, guard_pos)?;
+    let mut sum = 0;
+
+    for pos in candidates {
+        let y = pos.y as usize;
+        let x = pos.x as usize;
+        if map[y][x] == Square::Free {
+            map[y][x] = Square::Box;
+            if is_loop(&map, guard_pos)? {
+                sum += 1;
+            }
+            map[y][x] = Square::Free;
+        }
+    }
+
+    Ok(sum)
+}
+
+fn is_loop(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<bool, Box<dyn Error>> {
     let mut direction = 0;
-
-    let height = map.len().try_into()?;
-    let width = map[0].len().try_into()?;
-
-    let mut visited: HashSet<(Pos, usize)> = HashSet::new();
+    let height = map.len() as i32;
+    let width = map[0].len() as i32;
+    let mut visited = HashSet::new();
     visited.insert((guard_pos, direction));
 
     loop {
-        let next_dir: Pos = DIRS[direction];
+        let next_dir = DIRS[direction];
         let igy = guard_pos.y + next_dir.y;
         let igx = guard_pos.x + next_dir.x;
 
@@ -185,15 +134,12 @@ fn is_loop(map: &Vec<Vec<Square>>, guard: Pos) -> Result<(bool, usize), Box<dyn 
             break;
         }
 
-        let gy: usize = igy.try_into()?;
-        let gx: usize = igx.try_into()?;
+        let gy = igy as usize;
+        let gx = igx as usize;
 
-        let next_space = &map[gy][gx];
-
-        match next_space {
+        match map[gy][gx] {
             Square::Free => {
-                guard_pos.x = gx.try_into()?;
-                guard_pos.y = gy.try_into()?;
+                guard_pos = Pos { x: gx as i32, y: gy as i32 };
             }
             Square::Box => {
                 direction = (direction + 1) % 4;
@@ -201,12 +147,11 @@ fn is_loop(map: &Vec<Vec<Square>>, guard: Pos) -> Result<(bool, usize), Box<dyn 
         }
 
         if visited.contains(&(guard_pos, direction)) {
-            return Ok((true, visited.len()));
+            return Ok(true);
         } else {
             visited.insert((guard_pos, direction));
-            continue;
         }
     }
 
-    Ok((false, visited.len()))
+    Ok(false)
 }
