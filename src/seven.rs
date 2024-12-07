@@ -1,4 +1,6 @@
-use std::{ cmp::Ordering, collections::HashMap, error::Error, fs };
+use std::{ collections::HashMap, error::Error, fs, ops::{ Add, Mul } };
+
+use rayon::iter::{ IntoParallelIterator, IntoParallelRefIterator, ParallelIterator };
 
 pub fn seven() -> Result<(), Box<dyn Error>> {
     println!("Day Seven");
@@ -14,124 +16,129 @@ pub fn seven() -> Result<(), Box<dyn Error>> {
 
 fn seven_one() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/seven.txt")?;
+    let sides: Vec<(u64, Vec<u64>)> = file
+        .lines()
+        .filter_map(|l| {
+            let ex: Vec<&str> = l.split(": ").collect();
+            let left = ex[0].parse::<u64>().ok()?;
+            let right: Vec<u64> = ex[1]
+                .split(" ")
+                .filter_map(|n| n.parse::<u64>().ok())
+                .collect();
+            Some((left, right))
+        })
+        .collect();
 
-    let sections: Vec<&str> = file.split("\r\n\r\n").collect();
-
-    let mut rule_map: HashMap<i32, Vec<i32>> = HashMap::new();
-
-    let rules = sections[0];
-    let pages = sections[1];
-
-    for ele in rules.lines() {
-        let nums: Vec<i32> = ele
-            .split("|")
-            .filter_map(|f| f.parse().ok())
-            .collect();
-
-        let left = nums[0];
-        let right = nums[1];
-
-        match rule_map.get_mut(&left) {
-            Some(vec) => {
-                vec.push(right);
-            }
-            None => {
-                rule_map.insert(left, vec![right]);
-            }
-        }
-    }
-
-    let mut sum = 0;
-
-    'outer: for line in pages.lines() {
-        let nums: Vec<i32> = line
-            .split(",")
-            .filter_map(|f| f.parse().ok())
-            .collect();
-        for (idx, num) in nums.iter().enumerate() {
-            match rule_map.get(&num) {
-                Some(num_rules) => {
-                    let to_left = &nums[..idx];
-                    for left_num in to_left {
-                        if num_rules.contains(left_num) {
-                            // Go To Statement Considered Harmful 🦀
-                            continue 'outer;
-                        }
+    let sum: u64 = sides
+        .into_par_iter()
+        .map(|(p_sum, parts)| {
+            let size = parts.len() - 1;
+            for i in 0..(2_u64).pow(size as u32) {
+                let mut local_sum: u64 = parts[0];
+                for (j, r) in parts[1..].iter().enumerate() {
+                    // check if j-th bit is 0
+                    if ((i >> j) & 1) == 0 {
+                        local_sum += r;
+                    } else {
+                        local_sum *= r;
+                    }
+                    if local_sum > p_sum {
+                        break;
                     }
                 }
-                None => {
-                    continue;
+                if p_sum == local_sum {
+                    return local_sum;
                 }
             }
-        }
-        let mid = nums.len() / 2;
-        let mid_num = &nums[mid..mid + 1][0];
-        sum += mid_num;
-    }
+            0
+        })
+        .sum();
 
     Ok(sum.to_string())
 }
 
 fn seven_two() -> Result<String, Box<dyn Error>> {
+    let base = 3_u64;
     let file = fs::read_to_string("inputs/seven.txt")?;
 
-    let sections: Vec<&str> = file.split("\r\n\r\n").collect();
+    let sides: Vec<(u64, Vec<u64>)> = file
+        .lines()
+        .filter_map(|l| {
+            let ex: Vec<&str> = l.split(": ").collect();
+            let left = ex[0].parse::<u64>().ok()?;
+            let right: Vec<u64> = ex[1]
+                .split(" ")
+                .filter_map(|n| n.parse::<u64>().ok())
+                .collect();
+            Some((left, right))
+        })
+        .collect();
 
-    let mut rule_map: HashMap<i32, Vec<i32>> = HashMap::new();
+    let max_size = sides
+        .par_iter()
+        .map(|(_, parts)| parts.len())
+        .max()
+        .unwrap();
 
-    let rules = sections[0];
-    let pages = sections[1];
-
-    for ele in rules.lines() {
-        let nums: Vec<i32> = ele
-            .split("|")
-            .filter_map(|f| f.parse().ok())
-            .collect();
-
-        let left = nums[0];
-        let right = nums[1];
-
-        match rule_map.get_mut(&left) {
-            Some(vec) => {
-                vec.push(right);
+    let map: HashMap<usize, Vec<Vec<u64>>> = (0..max_size)
+        .into_par_iter()
+        .map(|size| {
+            let mut combinations = Vec::new();
+            for i in 0..base.pow(size as u32) {
+                let mut combination = Vec::with_capacity(size);
+                let mut num = i;
+                for _ in 0..size {
+                    combination.push(num % base);
+                    num /= base;
+                }
+                combinations.push(combination);
             }
-            None => {
-                rule_map.insert(left, vec![right]);
-            }
-        }
-    }
+            (size, combinations)
+        })
+        .collect();
 
-    let mut sum = 0;
+    let sum: u64 = sides
+        .into_iter()
+        .map(|(p_sum, parts)| {
+            let size = parts.len() - 1;
+            let combinations = map.get(&size).unwrap();
 
-    for line in pages.lines() {
-        let nums: Vec<i32> = line
-            .split(",")
-            .filter_map(|f| f.parse().ok())
-            .collect();
-
-        let mut sorted = nums.clone();
-        sorted.sort_by(|l, r| {
-            match rule_map.get(&l) {
-                Some(num_rules) => {
-                    if num_rules.contains(r) {
-                        return Ordering::Less;
-                    } else {
-                        return Ordering::Greater;
+            let sum = combinations
+                .par_iter() // Parallelize the loop over combinations
+                .find_map_any(|combination| {
+                    let mut local_sum: u64 = parts[0];
+                    for i in 1..parts.len() {
+                        let r = parts[i];
+                        let op = combination[i - 1];
+                        match op {
+                            0 => {
+                                local_sum = local_sum.add(r);
+                            }
+                            1 => {
+                                local_sum = local_sum.mul(r);
+                            }
+                            2 => {
+                                local_sum = (local_sum.to_string() + &r.to_string())
+                                    .parse::<u64>()
+                                    .unwrap();
+                            }
+                            _ => panic!("Unexpected operation {}", op),
+                        }
+                        if local_sum > p_sum {
+                            return None; // Continue to the next combination
+                        }
                     }
-                }
-                None => {
-                    return Ordering::Equal;
-                }
-            }
-        });
 
-        if sorted != nums {
-            // Array was changed
-            let mid = sorted.len() / 2;
-            let mid_num = &sorted[mid..mid + 1][0];
-            sum += mid_num;
-        }
-    }
+                    if p_sum == local_sum {
+                        return Some(local_sum); // Found a match, return the result
+                    } else {
+                        None // Continue to the next combination
+                    }
+                })
+                .unwrap_or(0);
+            sum
+        })
+        .sum();
 
     Ok(sum.to_string())
 }
