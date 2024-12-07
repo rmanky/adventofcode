@@ -1,15 +1,17 @@
-use std::{ collections::HashSet, error::Error, fs };
+use std::{collections::HashSet, error::Error, fs};
+
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 pub fn six() -> Result<(), Box<dyn Error>> {
     println!("Day Six");
 
     let input = fs::read_to_string("inputs/six.txt")?;
-    let (mut map, guard_pos) = parse_input(&input)?;
+    let (map, guard_pos) = parse_input(&input)?;
 
     let pt1 = run_maze(&map, guard_pos)?.len();
     println!("Part 1: {}", pt1);
 
-    let pt2 = count_fillable_squares(map.as_mut(), guard_pos)?;
+    let pt2 = count_fillable_squares(&map, guard_pos)?;
     println!("Part 2: {}", pt2);
 
     Ok(())
@@ -43,19 +45,17 @@ fn parse_input(input: &str) -> Result<(Vec<Vec<Square>>, Pos), Box<dyn Error>> {
         .map(|(y, line)| {
             line.chars()
                 .enumerate()
-                .filter_map(|(x, c)| {
-                    match c {
-                        '#' => Some(Square::Box),
-                        '^' => {
-                            guard_pos = Pos {
-                                y: y as i32,
-                                x: x as i32,
-                            };
-                            Some(Square::Free)
-                        }
-                        '.' => Some(Square::Free),
-                        _ => None,
+                .map(|(x, c)| match c {
+                    '#' => Square::Box,
+                    '^' => {
+                        guard_pos = Pos {
+                            y: y as i32,
+                            x: x as i32,
+                        };
+                        Square::Free
                     }
+                    '.' => Square::Free,
+                    _ => panic!("Invalid character in input"),
                 })
                 .collect()
         })
@@ -84,7 +84,10 @@ fn run_maze(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<HashSet<Pos>, 
 
         match map[gy][gx] {
             Square::Free => {
-                guard_pos = Pos { x: gx as i32, y: gy as i32 };
+                guard_pos = Pos {
+                    x: gx as i32,
+                    y: gy as i32,
+                };
                 visited.insert(guard_pos);
             }
             Square::Box => {
@@ -96,32 +99,29 @@ fn run_maze(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<HashSet<Pos>, 
     Ok(visited)
 }
 
-fn count_fillable_squares(
-    map: &mut Vec<Vec<Square>>,
-    guard_pos: Pos
-) -> Result<usize, Box<dyn Error>> {
+fn count_fillable_squares(map: &Vec<Vec<Square>>, guard_pos: Pos) -> Result<i32, Box<dyn Error>> {
     let candidates = run_maze(map, guard_pos)?;
-    let mut sum = 0;
 
-    for pos in candidates {
-        let y = pos.y as usize;
-        let x = pos.x as usize;
-        if map[y][x] == Square::Free {
-            map[y][x] = Square::Box;
-            if is_loop(&map, guard_pos)? {
-                sum += 1;
+    let sum: i32 = candidates
+        .par_iter() // threads go brrrrr
+        .map(|pos| {
+            if map[pos.y as usize][pos.x as usize] == Square::Box {
+                0
+            } else if let Ok(true) = is_loop(&map, *pos, guard_pos) {
+                1
+            } else {
+                0
             }
-            map[y][x] = Square::Free;
-        }
-    }
+        })
+        .sum();
 
     Ok(sum)
 }
 
-fn is_loop(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<bool, Box<dyn Error>> {
-    let mut direction = 0;
+fn is_loop(map: &Vec<Vec<Square>>, bbox: Pos, mut guard_pos: Pos) -> Result<bool, Box<dyn Error>> {
     let height = map.len() as i32;
     let width = map[0].len() as i32;
+    let mut direction = 0;
     let mut visited = HashSet::new();
     visited.insert((guard_pos, direction));
 
@@ -137,12 +137,19 @@ fn is_loop(map: &Vec<Vec<Square>>, mut guard_pos: Pos) -> Result<bool, Box<dyn E
         let gy = igy as usize;
         let gx = igx as usize;
 
-        match map[gy][gx] {
-            Square::Free => {
-                guard_pos = Pos { x: gx as i32, y: gy as i32 };
-            }
-            Square::Box => {
-                direction = (direction + 1) % 4;
+        if igy == bbox.y && igx == bbox.x {
+            direction = (direction + 1) % 4;
+        } else {
+            match map[gy][gx] {
+                Square::Free => {
+                    guard_pos = Pos {
+                        x: gx as i32,
+                        y: gy as i32,
+                    };
+                }
+                Square::Box => {
+                    direction = (direction + 1) % 4;
+                }
             }
         }
 
