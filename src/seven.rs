@@ -125,14 +125,14 @@ fn seven_two() -> Result<String, Box<dyn Error>> {
                             _ => panic!("Unexpected operation {}", op),
                         }
                         if local_sum > p_sum {
-                            return None; // Continue to the next combination
+                            return None;
                         }
                     }
 
                     if p_sum == local_sum {
-                        return Some(local_sum); // Found a match, return the result
+                        return Some(local_sum);
                     } else {
-                        None // Continue to the next combination
+                        None
                     }
                 })
                 .unwrap_or(0);
