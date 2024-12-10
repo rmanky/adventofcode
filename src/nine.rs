@@ -5,8 +5,8 @@ use itertools::Itertools;
 pub fn nine() -> Result<(), Box<dyn Error>> {
     println!("Day Nine");
 
-    // let pt1 = nine_one()?;
-    // println!("Part 1: {}", pt1);
+    let pt1 = nine_one()?;
+    println!("Part 1: {}", pt1);
 
     let pt2 = nine_two()?;
     println!("Part 2: {}", pt2);

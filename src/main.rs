@@ -9,6 +9,7 @@ mod six;
 mod seven;
 mod eight;
 mod nine;
+mod ten;
 
 use two::two;
 use one::one;
@@ -19,6 +20,7 @@ use six::six;
 use seven::seven;
 use eight::eight;
 use nine::nine;
+use ten::ten;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let option = std::env::args().nth(1).expect("Please select a day to run.");
@@ -32,6 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "seven" => seven(),
         "eight" => eight(),
         "nine" => nine(),
+        "ten" => ten(),
         s => panic!("Invalid option: {}", s),
     }
 }
