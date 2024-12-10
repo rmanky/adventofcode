@@ -1,4 +1,4 @@
-use std::{ cmp::Ordering, collections::HashMap, error::Error, fs };
+use std::{cmp::Ordering, collections::HashMap, error::Error, fs};
 
 pub fn five() -> Result<(), Box<dyn Error>> {
     println!("Day Five");
@@ -23,10 +23,7 @@ fn five_one() -> Result<String, Box<dyn Error>> {
     let pages = sections[1];
 
     for ele in rules.lines() {
-        let nums: Vec<i32> = ele
-            .split("|")
-            .filter_map(|f| f.parse().ok())
-            .collect();
+        let nums: Vec<i32> = ele.split("|").filter_map(|f| f.parse().ok()).collect();
 
         let left = nums[0];
         let right = nums[1];
@@ -44,10 +41,7 @@ fn five_one() -> Result<String, Box<dyn Error>> {
     let mut sum = 0;
 
     'outer: for line in pages.lines() {
-        let nums: Vec<i32> = line
-            .split(",")
-            .filter_map(|f| f.parse().ok())
-            .collect();
+        let nums: Vec<i32> = line.split(",").filter_map(|f| f.parse().ok()).collect();
         for (idx, num) in nums.iter().enumerate() {
             match rule_map.get(&num) {
                 Some(num_rules) => {
@@ -83,10 +77,7 @@ fn five_two() -> Result<String, Box<dyn Error>> {
     let pages = sections[1];
 
     for ele in rules.lines() {
-        let nums: Vec<i32> = ele
-            .split("|")
-            .filter_map(|f| f.parse().ok())
-            .collect();
+        let nums: Vec<i32> = ele.split("|").filter_map(|f| f.parse().ok()).collect();
 
         let left = nums[0];
         let right = nums[1];
@@ -104,24 +95,19 @@ fn five_two() -> Result<String, Box<dyn Error>> {
     let mut sum = 0;
 
     for line in pages.lines() {
-        let nums: Vec<i32> = line
-            .split(",")
-            .filter_map(|f| f.parse().ok())
-            .collect();
+        let nums: Vec<i32> = line.split(",").filter_map(|f| f.parse().ok()).collect();
 
         let mut sorted = nums.clone();
-        sorted.sort_by(|l, r| {
-            match rule_map.get(&l) {
-                Some(num_rules) => {
-                    if num_rules.contains(r) {
-                        return Ordering::Less;
-                    } else {
-                        return Ordering::Greater;
-                    }
+        sorted.sort_by(|l, r| match rule_map.get(&l) {
+            Some(num_rules) => {
+                if num_rules.contains(r) {
+                    return Ordering::Less;
+                } else {
+                    return Ordering::Greater;
                 }
-                None => {
-                    return Ordering::Equal;
-                }
+            }
+            None => {
+                return Ordering::Equal;
             }
         });
 

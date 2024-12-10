@@ -1,4 +1,8 @@
-use std::{ collections::{ HashMap, HashSet }, error::Error, fs };
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+    fs,
+};
 
 use itertools::Itertools;
 
@@ -14,8 +18,7 @@ pub fn eight() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[derive(Debug, Clone, Copy)]
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 struct Pos {
     y: i32,
     x: i32,
@@ -23,19 +26,17 @@ struct Pos {
 
 fn eight_one() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/eight.txt")?;
-    let grid: Vec<Vec<char>> = file
-        .lines()
-        .map(|l| l.chars().collect())
-        .collect();
+    let grid: Vec<Vec<char>> = file.lines().map(|l| l.chars().collect()).collect();
 
     let mut map: HashMap<char, Vec<Pos>> = HashMap::new();
 
     for (y, row) in grid.iter().enumerate() {
         for (x, c) in row.iter().enumerate() {
             if *c != '.' {
-                map.entry(*c)
-                    .or_insert_with(Vec::new)
-                    .push(Pos { y: y as i32, x: x as i32 });
+                map.entry(*c).or_insert_with(Vec::new).push(Pos {
+                    y: y as i32,
+                    x: x as i32,
+                });
             }
         }
     }
@@ -74,19 +75,17 @@ fn eight_one() -> Result<String, Box<dyn Error>> {
 
 fn eight_two() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/eight.txt")?;
-    let grid: Vec<Vec<char>> = file
-        .lines()
-        .map(|l| l.chars().collect())
-        .collect();
+    let grid: Vec<Vec<char>> = file.lines().map(|l| l.chars().collect()).collect();
 
     let mut map: HashMap<char, Vec<Pos>> = HashMap::new();
 
     for (y, row) in grid.iter().enumerate() {
         for (x, c) in row.iter().enumerate() {
             if *c != '.' {
-                map.entry(*c)
-                    .or_insert_with(Vec::new)
-                    .push(Pos { y: y as i32, x: x as i32 });
+                map.entry(*c).or_insert_with(Vec::new).push(Pos {
+                    y: y as i32,
+                    x: x as i32,
+                });
             }
         }
     }

@@ -1,4 +1,4 @@
-use std::{ error::Error, fs };
+use std::{error::Error, fs};
 
 pub fn four() -> Result<(), Box<dyn Error>> {
     println!("Day Four");
@@ -15,10 +15,7 @@ pub fn four() -> Result<(), Box<dyn Error>> {
 fn four_one() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/four.txt")?;
 
-    let matrix: Vec<Vec<char>> = file
-        .split("\n")
-        .map(|l| l.chars().collect())
-        .collect();
+    let matrix: Vec<Vec<char>> = file.split("\n").map(|l| l.chars().collect()).collect();
 
     let mut sum = 0;
 
@@ -49,7 +46,7 @@ fn search_direction(
     matrix: &Vec<Vec<char>>,
     (y, x): (i32, i32),
     (dy, dx): (i32, i32),
-    prev_char: char
+    prev_char: char,
 ) -> Result<bool, Box<dyn Error>> {
     let syi = y + dy;
     let sxi = x + dx;
@@ -76,10 +73,7 @@ fn search_direction(
 fn four_two() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/four.txt")?;
 
-    let matrix: Vec<Vec<char>> = file
-        .split("\n")
-        .map(|l| l.chars().collect())
-        .collect();
+    let matrix: Vec<Vec<char>> = file.split("\n").map(|l| l.chars().collect()).collect();
 
     let mut sum = 0;
 
@@ -105,30 +99,26 @@ fn four_two() -> Result<String, Box<dyn Error>> {
                         if let Some(next_row) = matrix.get(sy) {
                             if let Some(next_char) = next_row.get(sx) {
                                 match next_char {
-                                    'M' => {
-                                        match prev_m {
-                                            Some((py, px)) => {
-                                                if !(syi != py && sxi != px) {
-                                                    has_m = true;
-                                                }
-                                            }
-                                            None => {
-                                                prev_m = Some((syi, sxi));
+                                    'M' => match prev_m {
+                                        Some((py, px)) => {
+                                            if !(syi != py && sxi != px) {
+                                                has_m = true;
                                             }
                                         }
-                                    }
-                                    'S' => {
-                                        match prev_s {
-                                            Some((py, px)) => {
-                                                if !(syi != py && sxi != px) {
-                                                    has_s = true;
-                                                }
-                                            }
-                                            None => {
-                                                prev_s = Some((syi, sxi));
+                                        None => {
+                                            prev_m = Some((syi, sxi));
+                                        }
+                                    },
+                                    'S' => match prev_s {
+                                        Some((py, px)) => {
+                                            if !(syi != py && sxi != px) {
+                                                has_s = true;
                                             }
                                         }
-                                    }
+                                        None => {
+                                            prev_s = Some((syi, sxi));
+                                        }
+                                    },
                                     _ => {}
                                 }
                             }

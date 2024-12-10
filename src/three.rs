@@ -1,4 +1,4 @@
-use std::{ error::Error, fs };
+use std::{error::Error, fs};
 
 use regex::Regex;
 

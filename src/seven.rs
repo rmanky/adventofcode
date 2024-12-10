@@ -1,6 +1,11 @@
-use std::{ collections::HashMap, error::Error, fs, ops::{ Add, Mul } };
+use std::{
+    collections::HashMap,
+    error::Error,
+    fs,
+    ops::{Add, Mul},
+};
 
-use rayon::iter::{ IntoParallelIterator, IntoParallelRefIterator, ParallelIterator };
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 pub fn seven() -> Result<(), Box<dyn Error>> {
     println!("Day Seven");

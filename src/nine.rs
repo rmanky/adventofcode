@@ -1,4 +1,7 @@
-use std::{ error::Error, fs::{ self } };
+use std::{
+    error::Error,
+    fs::{self},
+};
 
 pub fn nine() -> Result<(), Box<dyn Error>> {
     println!("Day Nine");
@@ -22,33 +25,21 @@ fn nine_one() -> Result<String, Box<dyn Error>> {
         .map(|(i, c)| {
             if i % 2 == 0 {
                 let num = (i as i32) / 2;
-                let t: Vec<i32> = (0..c)
-                    .into_iter()
-                    .map(|_| num as i32)
-                    .collect();
+                let t: Vec<i32> = (0..c).into_iter().map(|_| num as i32).collect();
                 t
             } else {
-                let t: Vec<i32> = (0..c)
-                    .into_iter()
-                    .map(|_| -1)
-                    .collect();
+                let t: Vec<i32> = (0..c).into_iter().map(|_| -1).collect();
                 t
             }
         })
         .flatten()
         .collect();
 
-    let spaces = chars
-        .iter()
-        .filter(|c| **c == -1)
-        .count();
+    let spaces = chars.iter().filter(|c| **c == -1).count();
 
     for _ in 0..spaces {
         let last = chars.pop().unwrap();
-        let insert = chars
-            .iter()
-            .position(|c| *c == -1)
-            .unwrap();
+        let insert = chars.iter().position(|c| *c == -1).unwrap();
         chars.remove(insert);
         chars.insert(insert, last);
     }
@@ -56,7 +47,7 @@ fn nine_one() -> Result<String, Box<dyn Error>> {
     let sum: u64 = chars
         .iter()
         .enumerate()
-        .map(|(i, c)| { (i as u64) * (*c as u64) })
+        .map(|(i, c)| (i as u64) * (*c as u64))
         .sum();
 
     Ok(sum.to_string())
@@ -110,7 +101,13 @@ fn nine_two() -> Result<String, Box<dyn Error>> {
 
         if disk[free].length > file_length {
             disk[free].length -= file_length;
-            disk.insert(free, Block { id: i.to_string(), length: file_length });
+            disk.insert(
+                free,
+                Block {
+                    id: i.to_string(),
+                    length: file_length,
+                },
+            );
             disk[file + 1].id = ".".to_string();
         } else {
             disk[free].id = i.to_string();

@@ -1,29 +1,31 @@
 use std::error::Error;
 
-mod one;
-mod two;
-mod three;
-mod four;
-mod five;
-mod six;
-mod seven;
 mod eight;
+mod five;
+mod four;
 mod nine;
+mod one;
+mod seven;
+mod six;
 mod ten;
+mod three;
+mod two;
 
-use two::two;
-use one::one;
-use three::three;
-use four::four;
-use five::five;
-use six::six;
-use seven::seven;
 use eight::eight;
+use five::five;
+use four::four;
 use nine::nine;
+use one::one;
+use seven::seven;
+use six::six;
 use ten::ten;
+use three::three;
+use two::two;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let option = std::env::args().nth(1).expect("Please select a day to run.");
+    let option = std::env::args()
+        .nth(1)
+        .expect("Please select a day to run.");
     match option.as_str() {
         "one" => one(),
         "two" => two(),
