@@ -1,7 +1,4 @@
-use std::{ collections::HashSet, error::Error, fs::{ self }, path };
-
-use itertools::enumerate;
-use rayon::vec;
+use std::{ collections::HashSet, error::Error, fs::{ self } };
 
 pub fn ten() -> Result<(), Box<dyn Error>> {
     println!("Day Ten");
