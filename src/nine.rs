@@ -1,6 +1,5 @@
-use std::{ collections::{ HashMap, HashSet }, error::Error, fs::{ self, remove_dir } };
+use std::{ error::Error, fs::{ self } };
 
-use itertools::Itertools;
 
 pub fn nine() -> Result<(), Box<dyn Error>> {
     println!("Day Nine");
