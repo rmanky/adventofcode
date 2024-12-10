@@ -1,6 +1,5 @@
 use std::{ error::Error, fs::{ self } };
 
-
 pub fn nine() -> Result<(), Box<dyn Error>> {
     println!("Day Nine");
 
@@ -11,13 +10,6 @@ pub fn nine() -> Result<(), Box<dyn Error>> {
     println!("Part 2: {}", pt2);
 
     Ok(())
-}
-
-#[derive(Debug, Clone, Copy)]
-#[derive(Eq, Hash, PartialEq)]
-struct Pos {
-    y: i32,
-    x: i32,
 }
 
 fn nine_one() -> Result<String, Box<dyn Error>> {

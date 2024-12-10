@@ -1,4 +1,7 @@
-use std::{ error::Error, fs::{ self } };
+use std::{ collections::HashSet, error::Error, fs::{ self }, path };
+
+use itertools::enumerate;
+use rayon::vec;
 
 pub fn ten() -> Result<(), Box<dyn Error>> {
     println!("Day Ten");
@@ -6,138 +9,133 @@ pub fn ten() -> Result<(), Box<dyn Error>> {
     let pt1 = ten_one()?;
     println!("Part 1: {}", pt1);
 
-    // let pt2 = ten_two()?;
-    // println!("Part 2: {}", pt2);
+    let pt2 = ten_two()?;
+    println!("Part 2: {}", pt2);
 
     Ok(())
 }
 
+#[derive(Eq, Hash, PartialEq)]
+#[derive(Debug)]
+#[derive(Clone)]
+struct Pos {
+    y: usize,
+    x: usize,
+}
+
 fn ten_one() -> Result<String, Box<dyn Error>> {
     let file = fs::read_to_string("inputs/ten.txt")?;
-    let mut chars: Vec<i32> = file
-        .chars()
-        .filter(|c| c.is_digit(10))
-        .filter_map(|c| c.to_digit(10))
-        .enumerate()
-        .map(|(i, c)| {
-            if i % 2 == 0 {
-                let num = (i as i32) / 2;
-                let t: Vec<i32> = (0..c)
-                    .into_iter()
-                    .map(|_| num as i32)
-                    .collect();
-                t
-            } else {
-                let t: Vec<i32> = (0..c)
-                    .into_iter()
-                    .map(|_| -1)
-                    .collect();
-                t
-            }
-        })
-        .flatten()
+    let map: Vec<Vec<u32>> = file
+        .lines()
+        .map(|l|
+            l
+                .chars()
+                .map(|c| c.to_digit(10).unwrap())
+                .collect()
+        )
         .collect();
 
-    let spaces = chars
-        .iter()
-        .filter(|c| **c == -1)
-        .count();
+    let mut sum = 0;
 
-    for _ in 0..spaces {
-        let last = chars.pop().unwrap();
-        let insert = chars
-            .iter()
-            .position(|c| *c == -1)
-            .unwrap();
-        chars.remove(insert);
-        chars.insert(insert, last);
+    // find trailheads
+    for (y, r) in map.iter().enumerate() {
+        for (x, n) in r.iter().enumerate() {
+            if *n == 0 {
+                let mut seen = HashSet::new();
+                let curr_pos = Pos { y, x };
+                explore(curr_pos, &map, &mut seen);
+                sum += seen.len();
+            }
+        }
     }
-
-    let sum: u64 = chars
-        .iter()
-        .enumerate()
-        .map(|(i, c)| { (i as u64) * (*c as u64) })
-        .sum();
 
     Ok(sum.to_string())
 }
 
-// #[derive(Debug, Clone)]
-// struct Block {
-//     id: String,
-//     length: usize,
-// }
+fn explore(curr_pos: Pos, map: &Vec<Vec<u32>>, seen: &mut HashSet<Pos>) {
+    let curr = map[curr_pos.y][curr_pos.x];
+    let mut dirs: Vec<Pos> = vec![
+        Pos { y: curr_pos.y + 1, x: curr_pos.x },
+        Pos { y: curr_pos.y, x: curr_pos.x + 1 }
+    ];
+    if let Some(y) = curr_pos.y.checked_sub(1) {
+        dirs.push(Pos { y, x: curr_pos.x });
+    }
+    if let Some(x) = curr_pos.x.checked_sub(1) {
+        dirs.push(Pos { y: curr_pos.y, x });
+    }
+    for dir in dirs {
+        match map.get(dir.y).and_then(|r| r.get(dir.x)) {
+            Some(t) => {
+                if *t == curr + 1 {
+                    if *t == 9 {
+                        seen.insert(dir);
+                    } else {
+                        explore(dir, map, seen);
+                    }
+                }
+            }
+            None => {}
+        }
+    }
+}
 
-// fn ten_two() -> Result<String, Box<dyn Error>> {
-//     let input_str = fs::read_to_string("inputs/ten.txt")?;
-//     let input: Vec<usize> = input_str
-//         .chars()
-//         .filter(|c| c.is_digit(10))
-//         .map(|c| c.to_digit(10).unwrap() as usize)
-//         .collect();
+fn ten_two() -> Result<String, Box<dyn Error>> {
+    let file = fs::read_to_string("inputs/ten.txt")?;
+    let map: Vec<Vec<u32>> = file
+        .lines()
+        .map(|l|
+            l
+                .chars()
+                .map(|c| c.to_digit(10).unwrap())
+                .collect()
+        )
+        .collect();
 
-//     let mut disk: Vec<Block> = Vec::with_capacity(input.len() / 2); // Pre-allocate capacity
-//     let mut id = 0;
-//     for (i, &length) in input.iter().enumerate() {
-//         disk.push(Block {
-//             id: if i % 2 == 0 {
-//                 id.to_string()
-//             } else {
-//                 ".".to_string()
-//             },
-//             length,
-//         });
-//         if i % 2 == 0 {
-//             id += 1;
-//         }
-//     }
+    let mut sum = 0;
 
-//     for i in (0..id).rev() {
-//         let file = disk
-//             .iter()
-//             .position(|block| block.id == i.to_string())
-//             .unwrap();
-//         let free = disk
-//             .iter()
-//             .position(|block| block.id == "." && block.length >= disk[file].length);
+    // find trailheads
+    for (y, r) in map.iter().enumerate() {
+        for (x, n) in r.iter().enumerate() {
+            if *n == 0 {
+                let curr_pos = Pos { y, x };
+                let mut completed = vec![];
+                explore_v2(curr_pos, &map, vec![], &mut completed);
+                sum += completed.len();
+            }
+        }
+    }
 
-//         if free.is_none() || file < free.unwrap() {
-//             continue;
-//         }
+    Ok(sum.to_string())
+}
 
-//         let free = free.unwrap();
-//         let file_length = disk[file].length;
+fn explore_v2(curr_pos: Pos, map: &Vec<Vec<u32>>, path: Vec<Pos>, completed: &mut Vec<Vec<Pos>>) {
+    let curr = map[curr_pos.y][curr_pos.x];
 
-//         if disk[free].length > file_length {
-//             disk[free].length -= file_length;
-//             disk.insert(free, Block { id: i.to_string(), length: file_length });
-//             disk[file + 1].id = ".".to_string();
-//         } else {
-//             disk[free].id = i.to_string();
-//             disk[file].id = ".".to_string();
-//         }
-//     }
-
-//     let mut j = 0;
-//     while j < disk.len() - 1 {
-//         if disk[j].id == "." && disk[j + 1].id == "." {
-//             disk[j].length += disk.remove(j + 1).length;
-//             j -= 1;
-//         }
-//         j += 1;
-//     }
-
-//     let mut block = 0;
-//     let mut checksum = 0;
-//     for i in 0..disk.len() {
-//         if disk[i].id == "." {
-//             block += disk[i].length;
-//         } else {
-//             let id = disk[i].id.parse::<usize>().unwrap();
-//             checksum += (block..block + disk[i].length).sum::<usize>() * id;
-//             block += disk[i].length;
-//         }
-//     }
-
-//     Ok(checksum.to_string())
-// }
+    let mut dirs: Vec<Pos> = vec![
+        Pos { y: curr_pos.y + 1, x: curr_pos.x },
+        Pos { y: curr_pos.y, x: curr_pos.x + 1 }
+    ];
+    if let Some(y) = curr_pos.y.checked_sub(1) {
+        dirs.push(Pos { y, x: curr_pos.x });
+    }
+    if let Some(x) = curr_pos.x.checked_sub(1) {
+        dirs.push(Pos { y: curr_pos.y, x });
+    }
+    for dir in dirs {
+        let mut d_path = path.clone();
+        match map.get(dir.y).and_then(|r| r.get(dir.x)) {
+            Some(t) => {
+                if *t == curr + 1 {
+                    d_path.push(dir.clone());
+                    if *t == 9 {
+                        completed.push(d_path);
+                    } else {
+                        explore_v2(dir, map, d_path, completed);
+                    }
+                }
+            }
+            None => {}
+        }
+    }
+}
