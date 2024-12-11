@@ -1,6 +1,7 @@
 use std::error::Error;
 
 mod eight;
+mod eleven;
 mod five;
 mod four;
 mod nine;
@@ -12,6 +13,7 @@ mod three;
 mod two;
 
 use eight::eight;
+use eleven::eleven;
 use five::five;
 use four::four;
 use nine::nine;
@@ -37,6 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "eight" => eight(),
         "nine" => nine(),
         "ten" => ten(),
+        "eleven" => eleven(),
         s => panic!("Invalid option: {}", s),
     }
 }
