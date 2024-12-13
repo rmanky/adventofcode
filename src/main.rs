@@ -9,6 +9,7 @@ mod one;
 mod seven;
 mod six;
 mod ten;
+mod thirteen;
 mod three;
 mod twelve;
 mod two;
@@ -23,6 +24,7 @@ use one::one;
 use seven::seven;
 use six::six;
 use ten::ten;
+use thirteen::thirteen;
 use three::three;
 use twelve::twelve;
 use two::two;
@@ -44,6 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "ten" => ten(),
         "eleven" => eleven(),
         "twelve" => twelve(),
+        "thirteen" => thirteen(),
         s => panic!("Invalid option: {}", s),
     }
 }
